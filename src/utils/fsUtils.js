@@ -4,9 +4,9 @@ const path = require('path');
 async function readTalkerData() {
   try {
     const data = await fs.readFile(path.resolve(__dirname, '../talker.json'));
-    const talker = JSON.parse(data);
+    const talkers = JSON.parse(data);
 
-    return talker;
+    return talkers;
   } catch (error) {
     console.error(`Erro na leitura do arquivo: ${error}`);
   }

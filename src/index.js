@@ -1,7 +1,15 @@
+const fs = require('fs').promises;
+const path = require('path');
 const express = require('express');
-const crypto = require('crypto');
 const validateLogin = require('./middlewares/validateLogin');
 const { readTalkerData } = require('./utils/fsUtils');
+const generateToken = require('./utils/generateToken');
+const auth = require('./middlewares/auth');
+const validateAge = require('./middlewares/validateAge');
+const validateName = require('./middlewares/validateName');
+const validateRate = require('./middlewares/validateRate');
+const validateTalk = require('./middlewares/validateTalk');
+const validateWatchedAt = require('./middlewares/validateWatchedAt');
 
 const app = express();
 app.use(express.json());
@@ -9,13 +17,9 @@ app.use(express.json());
 const HTTP_OK_STATUS = 200;
 const PORT = '3000';
 
-function generateToken() {
-  return crypto.randomBytes(8).toString('hex');
-}
-
 // não remova esse endpoint, e para o avaliador funcionar
 app.get('/', (_request, response) => {
-    response.status(HTTP_OK_STATUS).send();
+  response.status(HTTP_OK_STATUS).send();
 });
 
 app.listen(PORT, () => {
@@ -31,7 +35,7 @@ app.get('/talker', async (req, res) => {
 app.get('/talker/:id', async (req, res) => {
   const talkers = await readTalkerData();
   const talker = talkers.find(({ id }) => id === Number(req.params.id));
-  
+
   if (!talker) {
     res.status(404).json({ message: 'Pessoa palestrante não encontrada' });
   }
@@ -40,5 +44,20 @@ app.get('/talker/:id', async (req, res) => {
 
 app.post('/login', validateLogin, (req, res) => {
   const token = generateToken();
-  res.status(200).json({ token });
+  res.status(HTTP_OK_STATUS).json({ token });
+});
+
+app.post('/talker', 
+auth, 
+validateName, 
+validateAge, 
+validateTalk, 
+validateWatchedAt, 
+validateRate, 
+async (req, res) => {
+  const talkers = await readTalkerData();
+  const newTalker = { id: talkers.length + 1, ...req.body };
+  const newTalkers = [...talkers, newTalker];
+  await fs.writeFile(path.resolve(__dirname, './talker.json'), JSON.stringify(newTalkers));
+  return res.status(201).json(newTalker);
 });

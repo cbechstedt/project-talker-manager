@@ -77,3 +77,14 @@ validateRate, async (req, res) => {
   await fs.writeFile(path.resolve(__dirname, './talker.json'), updatedTalkers);
   return res.status(200).json(talkers[index]);
 });
+
+app.delete('/talker/:id', auth, async (req, res) => {
+  const { id } = req.params;
+  const talkers = await readTalkerData();
+
+  const filteredTalkers = talkers.filter((element) => element.id !== Number(id));
+  const updatedTalkers = JSON.stringify(filteredTalkers);
+  await fs.writeFile(path.resolve(__dirname, './talker.json'), updatedTalkers);
+
+  return res.status(204).end();
+});
